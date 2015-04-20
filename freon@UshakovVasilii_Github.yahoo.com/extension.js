@@ -336,6 +336,7 @@ const FreonMenuButton = new Lang.Class({
                         l.set_text(s.value);
                 }
 
+            var reranderReason = null;
             if(this._lastSensorsCount && this._lastSensorsCount==sensors.length){
                 for each (let s in sensors) {
                     if(s.type != 'separator') {
@@ -349,17 +350,22 @@ const FreonMenuButton = new Lang.Class({
                                     item.display_name = s.displayName;
                             }
                         } else {
+                            reranderReason = 'Cannot find [' + s.label + '] menu item';
                             this._needRerender = true;
                         }
                     }
                 }
             } else {
+                reranderReason = 'Last sensor count is ' + this._lastSensorsCount + ', current is ' + sensors.length;
                 this._needRerender = true;
             }
 
             if(this._needRerender){
                 this._needRerender = false;
-                global.log('[FREON] Render all MenuItems');
+                var sensorLabels = [];
+                for each (let s in sensors)
+                    sensorLabels.push(s.label);
+                global.log('[FREON] Render all MenuItems. ' + (reranderReason || '') + ' Sensors:\n' + sensorLabels.join('\n'));
                 this.menu.removeAll();
                 this._appendMenuItems(sensors);
             }
