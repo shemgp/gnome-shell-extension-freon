@@ -234,8 +234,30 @@ const FreonMenuButton = new Lang.Class({
         }
     },
 
+    _fixNames: function(sensors){
+        let names = [];
+        for each (let s in sensors){
+            if(s.type == 'separator' ||
+               s.type == 'temperature-group' ||
+               s.type == 'temperature-average' ||
+               s.type == 'temperature-maximum')
+                continue;
+            let name = s.label;
+            let i = 1;
+            while(names.indexOf(name) >= 0){
+                name = s.label + '-' + i++;
+            }
+            if(name != s.label){
+                s.displayName = s.label;
+                s.label = name;
+            }
+            names.push(name);
+        }
+    },
+
     _updateDisplay: function(){
-        let gpuTempInfo = [];
+        let gpuTempInfo = this._utils.sensors.gpu;
+
         if (this._utils.gpu && this._utils.gpu.available)
             gpuTempInfo = gpuTempInfo.concat(this._utils.gpu.temp);
 
@@ -301,7 +323,7 @@ const FreonMenuButton = new Lang.Class({
                     sensors.push({type : 'separator'});
             }
 
-            if(this._settings.get_boolean('group-temperature')){
+            if(sensorsTempInfo.length > 0 && this._settings.get_boolean('group-temperature')){
                 sum = 0;
                 for each (let i in sensorsTempInfo){
                     sum += i.temp;
@@ -309,7 +331,7 @@ const FreonMenuButton = new Lang.Class({
                 sensors.push({
                     type:'temperature-group',
                     label:'temperature-group',
-                    value: this._formatTemp(sum/sensorsTempInfo.length)});
+                    value: this._formatTemp(sum / sensorsTempInfo.length)});
             }
 
             for each (let fan in fanInfo){
@@ -328,6 +350,8 @@ const FreonMenuButton = new Lang.Class({
                     value:_("%s%.2fV").format(((voltage.volt >= 0) ? '+' : '-'),
                     voltage.volt)});
             }
+
+            this._fixNames(sensors);
 
             for each (let s in sensors)
                 if(s.type != 'separator') {
@@ -391,21 +415,12 @@ const FreonMenuButton = new Lang.Class({
         let needGroupTemperature = this._settings.get_boolean('group-temperature');
         let needGroupVoltage = this._settings.get_boolean('group-voltage');
 
-        if(needGroupTemperature){
-            let i = 0;
-            for each (let s in sensors)
-                if(s.type == 'temperature')
-                    i++;
-            if(i <= 3)
-                needGroupTemperature = false;
-        }
-
         if(needGroupVoltage){
             let i = 0;
             for each (let s in sensors)
                 if(s.type == 'voltage')
                     i++;
-            if(i <= 3)
+            if(i < 2)
                 needGroupVoltage = false;
         }
 
@@ -478,6 +493,13 @@ const FreonMenuButton = new Lang.Class({
                     if(!temperatureGroup) {
                         temperatureGroup = new PopupMenu.PopupSubMenuMenuItem(_('Temperature Sensors'), true);
                         temperatureGroup.icon.gicon = this._sensorIcons['temperature'];
+			if(!temperatureGroup.status) { // gnome 3.18 and hight
+                            temperatureGroup.status = new St.Label({
+				     style_class: 'popup-status-menu-item',
+                                     y_expand: true,
+                                     y_align: Clutter.ActorAlign.CENTER });
+                            temperatureGroup.actor.insert_child_at_index(temperatureGroup.status, 4);
+			}
                         this.menu.addMenuItem(temperatureGroup);
                     }
                     temperatureGroup.menu.addMenuItem(item);
