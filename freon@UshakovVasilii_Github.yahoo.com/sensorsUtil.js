@@ -42,7 +42,27 @@ var SensorsUtil = class extends CommandLineUtil.CommandLineUtil {
 
         let data = []
         try {
-            data = JSON.parse(this._output.join(''));
+            // data = JSON.parse(this._output.join(''));
+            data = JSON.parse(`{"amdgpu-pci-0400":{
+      "Adapter": "PCI adapter",
+      "vddgfx":{
+         "in0_input": 0.875
+      },
+      "fan1":{
+         "fan1_input": 3699.000,
+         "fan1_min": 0.000,
+         "fan1_max": 7000.000
+      },
+      "temp1":{
+         "temp1_input": 41.000,
+         "temp1_crit": 97.000,
+         "temp1_crit_hyst": -273.150
+      },
+      "power1":{
+         "power1_average": 7.051,
+         "power1_cap": 35.000
+      }
+   }}`);
         } catch (e) {
           try {
             // fix for wrong lm_sensors output
